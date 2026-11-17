@@ -1,25 +1,32 @@
-import api from "../lib/axios";
+import { api } from "./api";
+
+export type Role = "ADMIN" | "AGENTE" | "EMPLEADO";
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  lastName: string;
+  email: string;
+  role: Role;
+}
 
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  role: "ADMIN" | "AGENTE" | "EMPLEADO";
-  name?: string;
-}
-
-export interface AuthResponse {
+export interface LoginResponse {
   access_token: string;
-  user: User;
+  user: AuthUser;
 }
 
 export const authService = {
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/auth/login", credentials);
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    const response = await api.post<LoginResponse>(
+      "/auth/login",
+      credentials
+    );
+
     return response.data;
   },
 };
