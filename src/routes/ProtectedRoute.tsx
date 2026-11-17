@@ -1,20 +1,20 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
-type Role = "ADMIN" | "AGENTE" | "EMPLEADO";
+import { useAuthStore } from "../stores/auth.store";
+import type { Role } from "../services/auth.service";
 
 interface ProtectedRouteProps {
   allowedRoles: Role[];
 }
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useAuth();
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
 
-  if (!isAuthenticated) {
+  if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  if (user && !allowedRoles.includes(user.role)) {
+  if (!allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
