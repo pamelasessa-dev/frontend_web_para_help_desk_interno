@@ -128,6 +128,28 @@ npm run build     # Compilar el proyecto
 npm run preview   # Previsualizar la compilación
 ```
 
+## Usuarios de prueba
+
+Para probar el inicio de sesión y los permisos según el rol, el backend cuenta con los siguientes usuarios de prueba.
+
+**Contraseña de para todos:** `12345678`
+
+| Usuario       | Correo electrónico | Rol      |
+| ------------- | ------------------ | -------- |
+| Admin Sistema | admin@helpdesk.com | ADMIN    |
+| Lucas Soporte | lucas@helpdesk.com | AGENTE   |
+| Maria Soporte | maria@helpdesk.com | AGENTE   |
+| Juan Empleado | juan@helpdesk.com  | EMPLEADO |
+
+### Rutas de prueba según el rol
+
+| Rol      | Ruta inicial        |
+| -------- | ------------------- |
+| ADMIN    | `/admin/dashboard`  |
+| AGENTE   | `/agente/dashboard` |
+| EMPLEADO | `/empleado/tickets` |
+
+
 ## Equipo
 
 Proyecto académico colaborativo – Help Desk Interno.

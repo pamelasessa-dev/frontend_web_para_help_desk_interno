@@ -4,6 +4,7 @@ import {
   type AuthUser,
   type LoginCredentials,
 } from "../services/auth.service";
+import { setUnauthorizedHandler } from "../services/api";
 
 interface AuthState {
   user: AuthUser | null;
@@ -48,11 +49,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         error: null,
       });
     } catch (error) {
-      const message = "No se pudo iniciar sesión. Verificá tus credenciales.";
-
       set({
         isLoading: false,
-        error: message,
+        error: "No se pudo iniciar sesión. Verificá tus credenciales.",
       });
 
       throw error;
@@ -71,3 +70,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 }));
+
+// Si el backend responde 401, cerramos la sesión.
+setUnauthorizedHandler(() => {
+  useAuthStore.getState().logout();
+});
