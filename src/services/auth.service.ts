@@ -22,7 +22,10 @@ export interface LoginResponse {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>("/auth/login", credentials);
+    const response = await api.post<LoginResponse>(
+      "/auth/login",
+      credentials
+    );
 
     return response.data;
   },
