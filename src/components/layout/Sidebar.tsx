@@ -1,15 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthStore } from "../../stores/auth.store";
 import { LayoutDashboard, Ticket, Tags, Users, Settings } from "lucide-react";
 
 export const Sidebar = () => {
-  const { user } = useAuth();
+  const user = useAuthStore((state) => state.user);
 
-  const getMenuItems = () => {
-    const baseItems = [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ];
-
+  const baseItems = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  ];
+  const menuItems = (() => {
     if (user?.role === "ADMIN") {
       return [
         ...baseItems,
@@ -34,11 +33,8 @@ export const Sidebar = () => {
         { to: "/tickets", label: "Mis Tickets", icon: Ticket },
       ];
     }
-
     return baseItems;
-  };
-
-  const menuItems = getMenuItems();
+  })();
 
   return (
     <aside className="w-64 bg-gray-800 text-white min-h-screen flex flex-col">
