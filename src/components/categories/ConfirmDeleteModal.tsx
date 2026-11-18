@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { Category } from "../../services/categories.service";
+import type { Category } from "../../types/category";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 interface ConfirmDeleteModalProps {

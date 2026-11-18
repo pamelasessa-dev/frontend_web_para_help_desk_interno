@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
-import {
-  categoriesService,
-  type Category,
-} from "../../services/categories.service";
+import { categoryService } from "../../services/categoryService";
+import type { Category } from "../../types/category";
 import { getErrorMessage } from "../../utils/getErrorMessage";
-
 interface CategorySelectProps {
   value: number | "";
   onChange: (value: number | "") => void;
@@ -25,7 +22,7 @@ export const CategorySelect = ({
   useEffect(() => {
     let active = true;
 
-    categoriesService
+    categoryService
       .getAll()
       .then((data) => {
         if (active) setCategories(data);

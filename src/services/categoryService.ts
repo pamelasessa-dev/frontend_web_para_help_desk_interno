@@ -1,19 +1,12 @@
 import { api } from "./api";
-
-export interface Category {
-  id: number;
-  name: string;
-  description: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { Category } from "../types/category";
 
 export interface CategoryPayload {
   name: string;
   description?: string;
 }
 
-export const categoriesService = {
+export const categoryService = {
   async getAll(): Promise<Category[]> {
     const { data } = await api.get<Category[]>("/categories");
     return data;

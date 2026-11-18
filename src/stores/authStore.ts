@@ -3,7 +3,7 @@ import {
   authService,
   type AuthUser,
   type LoginCredentials,
-} from "../services/auth.service";
+} from "../services/authService";
 import { setUnauthorizedHandler } from "../services/api";
 
 interface AuthState {

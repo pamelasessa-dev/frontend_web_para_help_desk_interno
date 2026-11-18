@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Menu } from "lucide-react";
-import { useAuthStore } from "../../stores/auth.store";
+import { useAuthStore } from "../../stores/authStore";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -35,12 +35,13 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
       <div className="flex items-center gap-4">
         {user && (
           <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
+            <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-gray-800">
                 {user.name} {user.lastName}
               </p>
               <p className="text-xs text-gray-500">{user.email}</p>
             </div>
+
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
               <User size={20} />
             </div>

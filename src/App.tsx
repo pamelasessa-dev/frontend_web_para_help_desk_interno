@@ -7,11 +7,41 @@ import {
 } from "react-router-dom";
 
 import { LoginPage } from "./pages/auth/LoginPage";
-import { ProtectedRoute } from "./routes/ProtectedRoute";
-import { useAuthStore } from "./stores/auth.store";
-import { MainLayout } from "./layouts/MainLayout";
+import { TicketsPage } from "./pages/tickets/TicketsPage";
+import { CreateTicketPage } from "./pages/tickets/CreateTicketPage";
+import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
 
-// Página provisional para comprobar el acceso de cada rol.
+import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { MainLayout } from "./layouts/MainLayout";
+import { useAuthStore } from "./stores/authStore";
+import { ToastProvider } from "./components/ui/ToastContext";
+
+// Dashboard general.
+const DashboardPage = () => {
+  const user = useAuthStore((state) => state.user);
+
+  return (
+    <section className="space-y-4">
+      <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-700">
+          ¡Bienvenido/a, {user?.name} {user?.lastName}!
+        </h2>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Desde aquí podrás acceder a las funcionalidades del sistema Help Desk.
+        </p>
+
+        <p className="mt-4 inline-block rounded-full bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-700">
+          Rol: {user?.role}
+        </p>
+      </div>
+    </section>
+  );
+};
+
+// Página provisional para las rutas específicas de cada rol.
 interface RoleHomeProps {
   title: string;
 }
@@ -56,9 +86,10 @@ const RoleHome = ({ title }: RoleHomeProps) => {
 // Página para usuarios sin permisos.
 const UnauthorizedPage = () => {
   const navigate = useNavigate();
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-      <section className="max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+      <section className="max-w-md rounded-xl bg-white p-8 text-center shadow-sm">
         <h1 className="text-2xl font-bold text-red-600">Acceso denegado</h1>
 
         <p className="mt-3 text-slate-600">
@@ -77,48 +108,74 @@ const UnauthorizedPage = () => {
   );
 };
 
+// Redirección según el estado de autenticación.
+const HomeRedirect = () => {
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+
+  return <Navigate to={user && token ? "/dashboard" : "/login"} replace />;
+};
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Ruta pública */}
-        <Route path="/login" element={<LoginPage />} />
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Rutas públicas */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          {/* Rutas protegidas */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "AGENTE", "EMPLEADO"]} />
+            }
+          >
+            <Route element={<MainLayout />}>
+              {/* Dashboard general */}
+              <Route path="/dashboard" element={<DashboardPage />} />
 
-        {/* Inicio */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+              {/* Tickets */}
+              <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/tickets/:id" element={<TicketDetailPage />} />
 
-        {/* Rutas exclusivas de ADMIN */}
-        <Route element={<MainLayout />}>
-          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route
-              path="/admin/dashboard"
-              element={<RoleHome title="Panel de administración" />}
-            />
+              {/* Crear tickets: solo empleados */}
+              <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
+                <Route path="/tickets/nuevo" element={<CreateTicketPage />} />
+              </Route>
+
+              {/* Rutas específicas de ADMIN */}
+              <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+                <Route
+                  path="/admin/dashboard"
+                  element={<RoleHome title="Panel de administración" />}
+                />
+              </Route>
+
+              {/* Rutas específicas de AGENTE */}
+              <Route element={<ProtectedRoute allowedRoles={["AGENTE"]} />}>
+                <Route
+                  path="/agente/dashboard"
+                  element={<RoleHome title="Panel de agente" />}
+                />
+              </Route>
+
+              {/* Rutas específicas de EMPLEADO */}
+              <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
+                <Route
+                  path="/empleado/tickets"
+                  element={<RoleHome title="Mis tickets" />}
+                />
+              </Route>
+            </Route>
           </Route>
 
-          {/* Rutas exclusivas de AGENTE */}
-          <Route element={<ProtectedRoute allowedRoles={["AGENTE"]} />}>
-            <Route
-              path="/agente/dashboard"
-              element={<RoleHome title="Panel de agente" />}
-            />
-          </Route>
-
-          {/* Rutas exclusivas de EMPLEADO */}
-          <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
-            <Route
-              path="/empleado/tickets"
-              element={<RoleHome title="Mis tickets" />}
-            />
-          </Route>
-        </Route>
-
-        {/* Rutas inexistentes */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Redirecciones */}
+          <Route path="/" element={<HomeRedirect />} />
+          <Route path="*" element={<HomeRedirect />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
   );
 }
 
