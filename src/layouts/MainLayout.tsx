@@ -1,34 +1,20 @@
-import { useAuthStore } from "../stores/auth.store";
-import { LogOut, User } from "lucide-react";
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { Sidebar } from "../components/layout/Sidebar";
+import { Navbar } from "../components/layout/Navbar";
 
-export const Navbar = () => {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+export const MainLayout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-3">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-800">
-            Bienvenido, {user?.email}
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <User size={18} />
-            <span>{user?.role}</span>
-          </div>
-
-          <button
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
-          >
-            <LogOut size={16} />
-            Cerrar sesión
-          </button>
-        </div>
+    <div className="flex h-screen bg-slate-50 relative">
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-6">
+          <Outlet />
+        </main>
       </div>
-    </header>
+    </div>
   );
 };

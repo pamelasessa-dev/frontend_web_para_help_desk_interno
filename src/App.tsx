@@ -9,6 +9,7 @@ import {
 import { LoginPage } from "./pages/auth/LoginPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { useAuthStore } from "./stores/auth.store";
+import { MainLayout } from "./layouts/MainLayout";
 
 // Página provisional para comprobar el acceso de cada rol.
 interface RoleHomeProps {
@@ -54,6 +55,7 @@ const RoleHome = ({ title }: RoleHomeProps) => {
 
 // Página para usuarios sin permisos.
 const UnauthorizedPage = () => {
+  const navigate = useNavigate();
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
       <section className="max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
@@ -65,7 +67,7 @@ const UnauthorizedPage = () => {
 
         <button
           type="button"
-          onClick={() => window.location.assign("/")}
+          onClick={() => navigate("/login", { replace: true })}
           className="mt-6 rounded-lg bg-cyan-600 px-5 py-2.5 font-semibold text-white hover:bg-cyan-500"
         >
           Volver al inicio
@@ -88,27 +90,29 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Rutas exclusivas de ADMIN */}
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route
-            path="/admin/dashboard"
-            element={<RoleHome title="Panel de administración" />}
-          />
-        </Route>
+        <Route element={<MainLayout />}>
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            <Route
+              path="/admin/dashboard"
+              element={<RoleHome title="Panel de administración" />}
+            />
+          </Route>
 
-        {/* Rutas exclusivas de AGENTE */}
-        <Route element={<ProtectedRoute allowedRoles={["AGENTE"]} />}>
-          <Route
-            path="/agente/dashboard"
-            element={<RoleHome title="Panel de agente" />}
-          />
-        </Route>
+          {/* Rutas exclusivas de AGENTE */}
+          <Route element={<ProtectedRoute allowedRoles={["AGENTE"]} />}>
+            <Route
+              path="/agente/dashboard"
+              element={<RoleHome title="Panel de agente" />}
+            />
+          </Route>
 
-        {/* Rutas exclusivas de EMPLEADO */}
-        <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
-          <Route
-            path="/empleado/tickets"
-            element={<RoleHome title="Mis tickets" />}
-          />
+          {/* Rutas exclusivas de EMPLEADO */}
+          <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
+            <Route
+              path="/empleado/tickets"
+              element={<RoleHome title="Mis tickets" />}
+            />
+          </Route>
         </Route>
 
         {/* Rutas inexistentes */}
