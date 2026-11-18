@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useAuthStore } from "../../stores/auth.store";
+import { useAuthStore } from "../../stores/authStore";
 import {
-  categoriesService,
-  type Category,
+  categoryService,
   type CategoryPayload,
-} from "../../services/categories.service";
+} from "../../services/categoryService";
+import type { Category } from "../../types/category";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import { CategoryFormModal } from "../../components/categories/CategoryFormModal";
 import { ConfirmDeleteModal } from "../../components/categories/ConfirmDeleteModal";
@@ -36,7 +36,7 @@ export const CategoriesPage = () => {
     setLoadError(null);
 
     try {
-      setCategories(await categoriesService.getAll());
+      setCategories(await categoryService.getAll());
     } catch (error) {
       setLoadError(
         getErrorMessage(error, "No se pudieron cargar las categorías"),
@@ -50,7 +50,6 @@ export const CategoriesPage = () => {
     void loadCategories();
   }, [loadCategories]);
 
-  // El mensaje de éxito/error desaparece solo a los 4 segundos
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(null), 4000);
@@ -72,16 +71,15 @@ export const CategoriesPage = () => {
     setEditingCategory(null);
   };
 
-  // Si la API falla, lanza el error y el modal lo muestra
   const handleSubmit = async (data: CategoryPayload) => {
     if (editingCategory) {
-      await categoriesService.update(editingCategory.id, data);
+      await categoryService.update(editingCategory.id, data);
       setNotice({
         type: "success",
         text: "Categoría actualizada correctamente",
       });
     } else {
-      await categoriesService.create(data);
+      await categoryService.create(data);
       setNotice({ type: "success", text: "Categoría creada correctamente" });
     }
 
@@ -92,7 +90,7 @@ export const CategoriesPage = () => {
   const handleDelete = async () => {
     if (!categoryToDelete) return;
 
-    await categoriesService.remove(categoryToDelete.id);
+    await categoryService.remove(categoryToDelete.id);
     setCategoryToDelete(null);
     setNotice({ type: "success", text: "Categoría eliminada correctamente" });
     await loadCategories();

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
-import { useAuthStore } from "../../stores/auth.store";
+import { useAuthStore } from "../../stores/authStore";
 
 // 1. Esquema de validación con Zod
 const loginSchema = z.object({

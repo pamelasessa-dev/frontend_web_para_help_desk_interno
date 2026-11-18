@@ -3,10 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, X } from "lucide-react";
-import type {
-  Category,
-  CategoryPayload,
-} from "../../services/categories.service";
+import type { Category } from "../../types/category";
+import type { CategoryPayload } from "../../services/categoryService";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 const categorySchema = z.object({
