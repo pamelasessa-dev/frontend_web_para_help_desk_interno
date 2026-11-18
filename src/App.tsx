@@ -6,10 +6,13 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import { HomePage } from "./pages/home/HomePage";
 import { LoginPage } from "./pages/auth/LoginPage";
 import { TicketsPage } from "./pages/tickets/TicketsPage";
 import { CreateTicketPage } from "./pages/tickets/CreateTicketPage";
 import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
+import { RegisterPage } from "./pages/auth/RegisterPage";
+import { CategoriesPage } from "./pages/categories/CategoriesPage";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -41,7 +44,6 @@ const DashboardPage = () => {
   );
 };
 
-// Página provisional para las rutas específicas de cada rol.
 interface RoleHomeProps {
   title: string;
 }
@@ -108,24 +110,18 @@ const UnauthorizedPage = () => {
   );
 };
 
-// Redirección según el estado de autenticación.
-const HomeRedirect = () => {
-  const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
-
-  return <Navigate to={user && token ? "/dashboard" : "/login"} replace />;
-};
-
 function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
         <Routes>
           {/* Rutas públicas */}
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-          {/* Rutas protegidas */}
+          {/* Rutas protegidas para todos los usuarios autenticados */}
           <Route
             element={
               <ProtectedRoute allowedRoles={["ADMIN", "AGENTE", "EMPLEADO"]} />
@@ -135,13 +131,21 @@ function App() {
               {/* Dashboard general */}
               <Route path="/dashboard" element={<DashboardPage />} />
 
-              {/* Tickets */}
+              {/* Tickets generales */}
               <Route path="/tickets" element={<TicketsPage />} />
               <Route path="/tickets/:id" element={<TicketDetailPage />} />
 
               {/* Crear tickets: solo empleados */}
               <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
                 <Route path="/tickets/nuevo" element={<CreateTicketPage />} />
+              </Route>
+
+              {/* Rutas compartidas entre ADMIN y AGENTE */}
+              <Route
+                element={<ProtectedRoute allowedRoles={["ADMIN", "AGENTE"]} />}
+              >
+                <Route path="/agente/tickets" element={<TicketsPage />} />
+                <Route path="/agente/categorias" element={<CategoriesPage />} />
               </Route>
 
               {/* Rutas específicas de ADMIN */}
@@ -170,9 +174,8 @@ function App() {
             </Route>
           </Route>
 
-          {/* Redirecciones */}
-          <Route path="/" element={<HomeRedirect />} />
-          <Route path="*" element={<HomeRedirect />} />
+          {/* Rutas inexistentes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </ToastProvider>

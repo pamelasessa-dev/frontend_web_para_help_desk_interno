@@ -7,14 +7,14 @@ export const MainLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <Navbar onMenuClick={() => setIsSidebarOpen((previous) => !previous)} />
-
+    <div className="flex h-screen bg-slate-50 relative">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-      <main className="w-full flex-1 p-6 md:p-8">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto p-6">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

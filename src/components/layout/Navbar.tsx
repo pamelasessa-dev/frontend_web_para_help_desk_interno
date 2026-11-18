@@ -35,7 +35,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
       <div className="flex items-center gap-4">
         {user && (
           <div className="flex items-center gap-3">
-            <div className="hidden text-right sm:block">
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-medium text-gray-800">
                 {user.name} {user.lastName}
               </p>
