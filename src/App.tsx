@@ -154,6 +154,7 @@ function App() {
                   path="/admin/dashboard"
                   element={<RoleHome title="Panel de administración" />}
                 />
+                <Route path="/admin/tickets" element={<TicketsPage />} />
               </Route>
 
               {/* Rutas específicas de AGENTE */}
@@ -162,14 +163,12 @@ function App() {
                   path="/agente/dashboard"
                   element={<RoleHome title="Panel de agente" />}
                 />
+                <Route path="/agente/tickets" element={<TicketsPage />} />
               </Route>
 
               {/* Rutas específicas de EMPLEADO */}
               <Route element={<ProtectedRoute allowedRoles={["EMPLEADO"]} />}>
-                <Route
-                  path="/empleado/tickets"
-                  element={<RoleHome title="Mis tickets" />}
-                />
+                <Route path="/empleado/tickets" element={<TicketsPage />} />
               </Route>
             </Route>
           </Route>
