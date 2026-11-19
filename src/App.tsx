@@ -13,6 +13,7 @@ import { CreateTicketPage } from "./pages/tickets/CreateTicketPage";
 import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
 import { CategoriesPage } from "./pages/categories/CategoriesPage";
+import { DashboardPage as MetricsDashboardPage } from "./pages/dashboard/DashboardPage";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -41,47 +42,6 @@ const DashboardPage = () => {
         </p>
       </div>
     </section>
-  );
-};
-
-interface RoleHomeProps {
-  title: string;
-}
-
-const RoleHome = ({ title }: RoleHomeProps) => {
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
-
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-      <section className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-lg">
-        <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-
-        <p className="mt-4 text-slate-600">
-          Bienvenido/a, {user?.name} {user?.lastName}
-        </p>
-
-        <p className="mt-2 text-sm text-slate-500">Correo: {user?.email}</p>
-
-        <p className="mt-2 text-sm font-semibold text-cyan-700">
-          Rol: {user?.role}
-        </p>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-8 w-full rounded-lg bg-red-600 px-4 py-2.5 font-semibold text-white transition hover:bg-red-500"
-        >
-          Cerrar sesión
-        </button>
-      </section>
-    </main>
   );
 };
 
@@ -152,7 +112,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route
                   path="/admin/dashboard"
-                  element={<RoleHome title="Panel de administración" />}
+                  element={<MetricsDashboardPage />}
                 />
                 <Route path="/admin/tickets" element={<TicketsPage />} />
               </Route>
@@ -161,7 +121,7 @@ function App() {
               <Route element={<ProtectedRoute allowedRoles={["AGENTE"]} />}>
                 <Route
                   path="/agente/dashboard"
-                  element={<RoleHome title="Panel de agente" />}
+                  element={<MetricsDashboardPage />}
                 />
                 <Route path="/agente/tickets" element={<TicketsPage />} />
               </Route>
