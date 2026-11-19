@@ -7,13 +7,19 @@ import {
   Tag,
   MessageCircle,
   Send,
+  RefreshCw,
+  UserPlus,
 } from "lucide-react";
 
 import { ticketService } from "../../services/ticketService";
 import { commentService } from "../../services/commentService";
+import { userService } from "../../services/userService";
+import { useAuthStore } from "../../stores/authStore";
+import { useToast } from "../../components/ui/ToastContext";
 
-import type { Ticket } from "../../types/ticket";
+import type { Ticket, TicketStatus } from "../../types/ticket";
 import type { TicketComment } from "../../types/comment";
+import type { User as UserType } from "../../types/user";
 
 const statusLabels: Record<string, string> = {
   ABIERTO: "Abierto",
@@ -37,18 +43,22 @@ const priorityLabels: Record<string, string> = {
 
 export const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-
+  const user = useAuthStore((state) => state.user);
+  const { showToast } = useToast();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
+  const [agents, setAgents] = useState<UserType[]>([]);
   const [newComment, setNewComment] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
   const [sending, setSending] = useState(false);
-
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [assigningAgent, setAssigningAgent] = useState(false);
   const [error, setError] = useState("");
   const [commentsError, setCommentsError] = useState("");
   const [sendError, setSendError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     const loadTicket = async () => {
@@ -86,10 +96,62 @@ export const TicketDetailPage = () => {
       } finally {
         setCommentsLoading(false);
       }
+
+      if (user?.role === "ADMIN" || user?.role === "AGENTE") {
+        try {
+          const agentsData = await userService.getAgents();
+          setAgents(agentsData);
+        } catch {
+          console.error("No se pudieron cargar los agentes.");
+        }
+      }
     };
 
     loadTicket();
-  }, [id]);
+  }, [id, user?.role]);
+
+  const handleUpdateStatus = async (newStatus: TicketStatus) => {
+    if (!id) return;
+    try {
+      setUpdatingStatus(true);
+      setActionError("");
+      const updated = await ticketService.updateStatus(Number(id), {
+        status: newStatus,
+      });
+      setTicket(updated);
+      showToast("Estado del ticket actualizado correctamente", "success");
+    } catch {
+      setActionError("No se pudo actualizar el estado del ticket.");
+      showToast("Error al actualizar el estado", "error");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleAssignAgent = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!id) return;
+    const formData = new FormData(event.currentTarget);
+    const assignedToId = Number(formData.get("assignedToId"));
+
+    if (!assignedToId) {
+      showToast("Seleccioná un agente para asignar", "error");
+      return;
+    }
+
+    try {
+      setAssigningAgent(true);
+      setActionError("");
+      const updated = await ticketService.assign(Number(id), { assignedToId });
+      setTicket(updated);
+      showToast("Agente asignado correctamente", "success");
+    } catch {
+      setActionError("No se pudo asignar el agente.");
+      showToast("Error al asignar el agente", "error");
+    } finally {
+      setAssigningAgent(false);
+    }
+  };
 
   const handleSubmitComment = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -107,14 +169,16 @@ export const TicketDetailPage = () => {
       });
 
       setComments((previousComments) => [...previousComments, createdComment]);
-
       setNewComment("");
+      showToast("Comentario agregado correctamente", "success");
     } catch {
       setSendError("No se pudo enviar el comentario. Intentá nuevamente.");
+      showToast("Error al enviar el comentario", "error");
     } finally {
       setSending(false);
     }
   };
+  const canManage = user?.role === "ADMIN" || user?.role === "AGENTE";
 
   if (loading) {
     return (
@@ -172,6 +236,80 @@ export const TicketDetailPage = () => {
           </span>
         </div>
       </div>
+
+      {/* PANEL DE GESTIÓN (Solo ADMIN y AGENTE) */}
+      {canManage && (
+        <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-cyan-900">
+            <RefreshCw size={20} /> Gestión del Ticket
+          </h2>
+
+          {actionError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {actionError}
+            </div>
+          )}
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Cambio de Estado */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Actualizar Estado
+              </label>
+              <div className="flex gap-2">
+                <select
+                  defaultValue={ticket.status}
+                  onChange={(e) =>
+                    handleUpdateStatus(e.target.value as TicketStatus)
+                  }
+                  disabled={updatingStatus}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 disabled:opacity-50"
+                >
+                  <option value="ABIERTO">Abierto</option>
+                  <option value="EN_PROCESO">En proceso</option>
+                  <option value="RESUELTO">Resuelto</option>
+                  <option value="CERRADO">Cerrado</option>
+                </select>
+                {updatingStatus && (
+                  <span className="flex items-center text-sm text-slate-500">
+                    Guardando...
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Asignación de Agente */}
+            <form onSubmit={handleAssignAgent}>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Asignar Agente
+              </label>
+              <div className="flex gap-2">
+                <select
+                  name="assignedToId"
+                  defaultValue={ticket.assignedToId || ""}
+                  disabled={assigningAgent || agents.length === 0}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 disabled:opacity-50"
+                >
+                  <option value="">Sin asignar</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.id}>
+                      {agent.name} {agent.lastName}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="submit"
+                  disabled={assigningAgent}
+                  className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <UserPlus size={16} />
+                  {assigningAgent ? "Asignando..." : "Asignar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold text-slate-800">
