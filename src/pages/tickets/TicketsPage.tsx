@@ -149,7 +149,6 @@ export const TicketsPage = () => {
       </div>
 
       {/* SECCIÓN DE FILTROS */}
-      {/* SECCIÓN DE FILTROS */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center gap-2 text-slate-600">
           <Filter size={18} />

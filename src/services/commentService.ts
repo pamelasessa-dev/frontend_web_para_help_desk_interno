@@ -21,4 +21,17 @@ export const commentService = {
 
     return response.data;
   },
+
+  async update(
+    ticketId: number,
+    commentId: number,
+    data: CreateCommentData,
+  ): Promise<TicketComment> {
+    const response = await api.patch<TicketComment>(
+      `/tickets/${ticketId}/comments/${commentId}`,
+      data,
+    );
+
+    return response.data;
+  },
 };

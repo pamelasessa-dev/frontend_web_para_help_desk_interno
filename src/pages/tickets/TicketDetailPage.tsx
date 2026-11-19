@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+﻿import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -9,6 +9,9 @@ import {
   Send,
   RefreshCw,
   UserPlus,
+  Pencil,
+  Save,
+  X,
 } from "lucide-react";
 
 import { ticketService } from "../../services/ticketService";
@@ -45,10 +48,15 @@ export const TicketDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const user = useAuthStore((state) => state.user);
   const { showToast } = useToast();
+
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<TicketComment[]>([]);
   const [agents, setAgents] = useState<UserType[]>([]);
   const [newComment, setNewComment] = useState("");
+
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
@@ -63,7 +71,7 @@ export const TicketDetailPage = () => {
   useEffect(() => {
     const loadTicket = async () => {
       if (!id || !Number.isInteger(Number(id)) || Number(id) <= 0) {
-        setError("El número de ticket no es válido.");
+        setError("El nÃºmero de ticket no es vÃ¡lido.");
         setLoading(false);
         setCommentsLoading(false);
         return;
@@ -79,7 +87,7 @@ export const TicketDetailPage = () => {
         setTicket(data);
       } catch {
         setError(
-          "No se pudo cargar el ticket. Verificá que tengas permiso para consultarlo.",
+          "No se pudo cargar el ticket. VerificÃ¡ que tengas permiso para consultarlo.",
         );
       } finally {
         setLoading(false);
@@ -112,12 +120,15 @@ export const TicketDetailPage = () => {
 
   const handleUpdateStatus = async (newStatus: TicketStatus) => {
     if (!id) return;
+
     try {
       setUpdatingStatus(true);
       setActionError("");
+
       const updated = await ticketService.updateStatus(Number(id), {
         status: newStatus,
       });
+
       setTicket(updated);
       showToast("Estado del ticket actualizado correctamente", "success");
     } catch {
@@ -131,18 +142,21 @@ export const TicketDetailPage = () => {
   const handleAssignAgent = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!id) return;
+
     const formData = new FormData(event.currentTarget);
     const assignedToId = Number(formData.get("assignedToId"));
 
     if (!assignedToId) {
-      showToast("Seleccioná un agente para asignar", "error");
+      showToast("SeleccionÃ¡ un agente para asignar", "error");
       return;
     }
 
     try {
       setAssigningAgent(true);
       setActionError("");
+
       const updated = await ticketService.assign(Number(id), { assignedToId });
+
       setTicket(updated);
       showToast("Agente asignado correctamente", "success");
     } catch {
@@ -156,9 +170,7 @@ export const TicketDetailPage = () => {
   const handleSubmitComment = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!id || !newComment.trim()) {
-      return;
-    }
+    if (!id || !newComment.trim()) return;
 
     try {
       setSending(true);
@@ -172,18 +184,59 @@ export const TicketDetailPage = () => {
       setNewComment("");
       showToast("Comentario agregado correctamente", "success");
     } catch {
-      setSendError("No se pudo enviar el comentario. Intentá nuevamente.");
+      setSendError("No se pudo enviar el comentario. IntentÃ¡ nuevamente.");
       showToast("Error al enviar el comentario", "error");
     } finally {
       setSending(false);
     }
   };
+
+  const handleStartEdit = (comment: TicketComment) => {
+    setEditingCommentId(comment.id);
+    setEditingContent(comment.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingContent("");
+  };
+
+  const handleSaveEdit = async (commentId: number) => {
+    if (!id || !editingContent.trim()) {
+      showToast("El comentario no puede estar vacÃ­o", "error");
+      return;
+    }
+
+    try {
+      setSavingEdit(true);
+
+      const updatedComment = await commentService.update(
+        Number(id),
+        commentId,
+        { content: editingContent.trim() },
+      );
+
+      setComments((previousComments) =>
+        previousComments.map((comment) =>
+          comment.id === commentId ? updatedComment : comment,
+        ),
+      );
+
+      handleCancelEdit();
+      showToast("Comentario actualizado correctamente", "success");
+    } catch {
+      showToast("No se pudo actualizar el comentario", "error");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const canManage = user?.role === "ADMIN" || user?.role === "AGENTE";
 
   if (loading) {
     return (
       <p className="rounded-xl bg-white p-6 text-slate-500 shadow-sm">
-        Cargando información del ticket...
+        Cargando informaciÃ³n del ticket...
       </p>
     );
   }
@@ -200,7 +253,7 @@ export const TicketDetailPage = () => {
         </Link>
 
         <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
-          {error || "No se encontró el ticket."}
+          {error || "No se encontrÃ³ el ticket."}
         </div>
       </section>
     );
@@ -237,11 +290,11 @@ export const TicketDetailPage = () => {
         </div>
       </div>
 
-      {/* PANEL DE GESTIÓN (Solo ADMIN y AGENTE) */}
+      {/* PANEL DE GESTIÃ“N (Solo ADMIN y AGENTE) */}
       {canManage && (
         <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-6 shadow-sm">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-cyan-900">
-            <RefreshCw size={20} /> Gestión del Ticket
+            <RefreshCw size={20} /> GestiÃ³n del Ticket
           </h2>
 
           {actionError && (
@@ -258,9 +311,9 @@ export const TicketDetailPage = () => {
               </label>
               <div className="flex gap-2">
                 <select
-                  defaultValue={ticket.status}
-                  onChange={(e) =>
-                    handleUpdateStatus(e.target.value as TicketStatus)
+                  value={ticket.status}
+                  onChange={(event) =>
+                    handleUpdateStatus(event.target.value as TicketStatus)
                   }
                   disabled={updatingStatus}
                   className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100 disabled:opacity-50"
@@ -278,7 +331,7 @@ export const TicketDetailPage = () => {
               </div>
             </div>
 
-            {/* Asignación de Agente */}
+            {/* AsignaciÃ³n de Agente */}
             <form onSubmit={handleAssignAgent}>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Asignar Agente
@@ -313,7 +366,7 @@ export const TicketDetailPage = () => {
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-3 text-lg font-semibold text-slate-800">
-          Descripción del problema
+          DescripciÃ³n del problema
         </h2>
 
         <p className="whitespace-pre-wrap text-sm leading-7 text-slate-600">
@@ -325,10 +378,10 @@ export const TicketDetailPage = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 text-slate-500">
             <Tag size={18} />
-            <span className="text-sm">Categoría</span>
+            <span className="text-sm">CategorÃ­a</span>
           </div>
           <p className="mt-2 font-semibold text-slate-800">
-            {ticket.category?.name ?? "Sin categoría"}
+            {ticket.category?.name ?? "Sin categorÃ­a"}
           </p>
         </div>
 
@@ -359,7 +412,7 @@ export const TicketDetailPage = () => {
           <p className="mt-2 font-semibold text-slate-800">
             {ticket.assignedTo
               ? `${ticket.assignedTo.name} ${ticket.assignedTo.lastName}`
-              : "Pendiente de asignación"}
+              : "Pendiente de asignaciÃ³n"}
           </p>
         </div>
       </div>
@@ -367,7 +420,7 @@ export const TicketDetailPage = () => {
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2 text-slate-500">
           <CalendarDays size={18} />
-          <span className="text-sm">Fecha de creación</span>
+          <span className="text-sm">Fecha de creaciÃ³n</span>
         </div>
         <p className="mt-2 font-medium text-slate-800">
           {new Date(ticket.createdAt).toLocaleString("es-UY")}
@@ -392,32 +445,92 @@ export const TicketDetailPage = () => {
           </p>
         ) : comments.length === 0 ? (
           <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-500">
-            Todavía no hay comentarios en este ticket.
+            TodavÃ­a no hay comentarios en este ticket.
           </p>
         ) : (
           <div className="space-y-4">
-            {comments.map((comment) => (
-              <article
-                key={comment.id}
-                className="rounded-lg border border-slate-100 bg-slate-50 p-4"
-              >
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-800">
-                    {comment.user
-                      ? `${comment.user.name} ${comment.user.lastName}`
-                      : "Usuario"}
-                  </p>
+            {comments.map((comment) => {
+              const isAuthor = comment.user.id === user?.id;
+              const isEditing = editingCommentId === comment.id;
 
-                  <time className="text-xs text-slate-400">
-                    {new Date(comment.createdAt).toLocaleString("es-UY")}
-                  </time>
-                </div>
+              return (
+                <article
+                  key={comment.id}
+                  className="rounded-lg border border-slate-100 bg-slate-50 p-4"
+                >
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-800">
+                      {comment.user
+                        ? `${comment.user.name} ${comment.user.lastName}`
+                        : "Usuario"}
+                    </p>
 
-                <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                  {comment.content}
-                </p>
-              </article>
-            ))}
+                    <div className="flex items-center gap-3">
+                      <time className="text-xs text-slate-400">
+                        {new Date(comment.createdAt).toLocaleString("es-UY")}
+                      </time>
+
+                      {isAuthor && !isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(comment)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-cyan-700 hover:text-cyan-900"
+                        >
+                          <Pencil size={14} />
+                          Editar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <textarea
+                        value={editingContent}
+                        onChange={(event) =>
+                          setEditingContent(event.target.value)
+                        }
+                        rows={4}
+                        maxLength={2000}
+                        className="w-full resize-y rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
+                      />
+
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-slate-400">
+                          {editingContent.length}/2000 caracteres
+                        </p>
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            disabled={savingEdit}
+                            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                          >
+                            <X size={15} />
+                            Cancelar
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSaveEdit(comment.id)}
+                            disabled={savingEdit || !editingContent.trim()}
+                            className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-3 py-2 text-sm font-medium text-white hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Save size={15} />
+                            {savingEdit ? "Guardando..." : "Guardar"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                      {comment.content}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
 
@@ -437,7 +550,7 @@ export const TicketDetailPage = () => {
             id="newComment"
             value={newComment}
             onChange={(event) => setNewComment(event.target.value)}
-            placeholder="Escribí tu comentario..."
+            placeholder="EscribÃ­ tu comentario..."
             rows={4}
             maxLength={2000}
             className="w-full resize-y rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-cyan-600 focus:ring-2 focus:ring-cyan-100"
@@ -468,3 +581,4 @@ export const TicketDetailPage = () => {
     </section>
   );
 };
+
