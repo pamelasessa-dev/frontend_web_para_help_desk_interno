@@ -14,6 +14,7 @@ import { TicketDetailPage } from "./pages/tickets/TicketDetailPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
 import { CategoriesPage } from "./pages/categories/CategoriesPage";
 import { DashboardPage as MetricsDashboardPage } from "./pages/dashboard/DashboardPage";
+import { UsersPage } from "./pages/users/UsersPage";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import { MainLayout } from "./layouts/MainLayout";
@@ -115,6 +116,7 @@ function App() {
                   element={<MetricsDashboardPage />}
                 />
                 <Route path="/admin/tickets" element={<TicketsPage />} />
+                <Route path="/admin/usuarios" element={<UsersPage />} />
               </Route>
 
               {/* Rutas específicas de AGENTE */}
